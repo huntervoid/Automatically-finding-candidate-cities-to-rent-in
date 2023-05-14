@@ -4,6 +4,8 @@ import time
 import csv
 import pprint
 
+import json
+
 import requests
 
 import googlemaps
@@ -12,41 +14,31 @@ from googlemaps import convert
 
 import urllib.parse
 
-
-# csv_file_path='/Users/huntervoid/programming/Ranking cities in NorCal/cal_cities.csv'
-# cal_cities = []
-# state=", CA, USA"
-# with open(csv_file_path, 'r') as file:
-#     csvreader=csv.reader(file)
-#     for row in csvreader:
-# 	    cal_cities.append(row[1]+state)
-# pp = pprint.PrettyPrinter(indent=4)
-# pp.pprint(cal_cities)
-
 class DistanceMatrixTest():
 
 
     def setUp(self):
-        csv_file_path='/Users/huntervoid/programming/Ranking cities in NorCal/cal_cities.csv'
-        cal_cities = []
-        state=", USA"
-        with open(csv_file_path, 'r') as file:
-            csvreader=csv.reader(file)
-            for row in csvreader:
-    	        cal_cities.append(row[1]+state)	
+        # csv_file_path='/Users/huntervoid/programming/Ranking cities in NorCal/cal_cities.csv'
+        # cal_cities = []
+        # state=", USA"
+        # with open(csv_file_path, 'r') as file:
+        #     csvreader=csv.reader(file)
+        #     for row in csvreader:
+    	#         cal_cities.append(row[1]+state)	
         self.key = "AIzaSyAjE6UiHJdgkgDLJ5zDM2upMuX81b15WZI"
         self.client = googlemaps.Client(self.key)
-        self.cal_cities = cal_cities
+        # self.cal_cities = cal_cities
         # print(cal_cities)
-
+        self.SF = ["San Francisco, USA"]
         self.attractive_centers = [
-			"San Francisco, USA"
-			# "Berkeley, USA",
-			# "Sacramento, USA"
-			# "Napa",
-			# "Sonoma",
-			# "San Mateo",
-			# "Palo Alto"
+			"San Francisco, USA",
+			"Berkeley, USA",
+			"Sacramento, USA"
+			"Napa, USA",
+			"Sonoma, USA",
+			"San Mateo, USA",
+			"Palo Alto, USA",
+            "San Jose, USA"
 		]
         # self.attractive_centers = attractive_centers
 
@@ -81,15 +73,6 @@ class DistanceMatrixTest():
         else:
             params = sorted(extra_params.items()) + params[:] # Take a copy.
 
-        # if accepts_clientid and self.client_id and self.client_secret:
-        #     if self.channel:
-        #         params.append(("channel", self.channel))
-        #     params.append(("client", self.client_id))
-
-        #     path = "?".join([path, urlencode_params(params)])
-        #     sig = sign_hmac(self.client_secret, path)
-        #     return path + "&signature=" + sig
-
         if self.key:
             params.append(("key", self.key))
             return path + "?" + urllib.parse.urlencode(params)
@@ -97,16 +80,16 @@ class DistanceMatrixTest():
         raise ValueError("Must provide API key for this API. It does not accept "
                          "enterprise credentials.")
 
-    def test_basic_params(self):
+    def test_basic_params(self, origins, destinations):
 
         pp = pprint.PrettyPrinter(indent=4)
 
-        origins = self.cal_cities[1:5]
+        # origins = self.cal_cities[0:2]
         # pp.pprint(self.attractive_centers)
-        destinations = self.attractive_centers
+        # destinations = self.attractive_centers
         # pp.pprint(destinations)
         params = self.built_parameters(origins, destinations)
-        pp.pprint(params)
+        # pp.pprint(params)
 
         url = self.generate_auth_url("https://maps.googleapis.com/maps/api/distancematrix/json", params)
         pp.pprint(url)
@@ -120,9 +103,51 @@ class DistanceMatrixTest():
 
         r = requests.request("GET", url, headers=headers, data=payload)
 
-        print(r.text)
+        # print(r.text)
+        return r
 
+    def filter_results(self, r):
+        max_dist_from_SF = 200.0 # km
+        SF_neighbors = []
+        pp = pprint.PrettyPrinter(indent=4)
+        r_dict = json.loads(r.text)
+        pp.pprint(r_dict)
+        destinations = r_dict["destination_addresses"]
+        origins = r_dict["origin_addresses"]
+        pp.pprint(len(origins))
+        # pp.pprint(destinations)
+        rows = r_dict["rows"]
+        for r in rows:
+            elements = r['elements']
+            for e in elements:
+                s = (e["distance"]['text']).split()
+                # distance_from_SF = e["distance"]['text']
+                distance_from_SF = float(s[0])
+                pp.pprint(distance_from_SF)
+                # if distance_from_SF <= max_dist_from_SF:
+                    # SF_neighbors.append()
 
+pp = pprint.PrettyPrinter(indent=4)
+SF = ["San Francisco, USA"]
+attractive_centers = [
+    "San Francisco, USA",
+    "Berkeley, USA",
+    "Sacramento, USA"
+    "Napa, USA",
+    "Sonoma, USA",
+    "San Mateo, USA",
+    "Palo Alto, USA",
+    "San Jose, USA"
+]
+csv_file_path='/Users/huntervoid/programming/Ranking cities in NorCal/cal_cities.csv'
+cal_cities = []
+state=", USA"
+with open(csv_file_path, 'r') as file:
+    csvreader=csv.reader(file)
+    for row in csvreader:
+        cal_cities.append(row[1]+state) 
+# pp.pprint(cal_cities)
 foo = DistanceMatrixTest()
 foo.setUp()
-foo.test_basic_params()
+results = foo.test_basic_params(cal_cities[2:5], SF)
+foo.filter_results(results)
