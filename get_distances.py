@@ -98,7 +98,7 @@ class DistanceMatrixTest():
         # pp.pprint(params)
 
         url = self.generate_auth_url("https://maps.googleapis.com/maps/api/distancematrix/json", params)
-        pp.pprint(url)
+        # pp.pprint(url)
 
         # matrix = self.client.distance_matrix(self.cal_cities[1:20], self.attractive_centers)
 
@@ -113,24 +113,28 @@ class DistanceMatrixTest():
         return r
 
     def filter_results(self, r):
-        max_dist_from_SF = 200.0 # km
+        max_dist_from_SF = 160 # km
         SF_neighbors = []
         pp = pprint.PrettyPrinter(indent=4)
         r_dict = json.loads(r.text)
         # pp.pprint(r_dict)
         destinations = r_dict["destination_addresses"]
         origins = r_dict["origin_addresses"]
+        pp.pprint(origins)
         # pp.pprint(len(origins))
         # pp.pprint(destinations)
         rows = r_dict["rows"]
         for i in range(len(origins)):
             elements = rows[i]['elements']
             for e in elements:
-                s = (e["distance"]['text']).split()
+                try:
+                    s = (e["distance"]['text']).split()
+                except:
+                    continue
                 # distance_from_SF = e["distance"]['text']
                 # distance_from_SF = float(s[0])
                 distance_from_SF = locale.atof(s[0])
-                pp.pprint(distance_from_SF)
+                # pp.pprint(distance_from_SF)
                 if distance_from_SF <= max_dist_from_SF:
                     SF_neighbors.append(r_dict["origin_addresses"][i])
         # pp.pprint(SF_neighbors)
@@ -150,10 +154,11 @@ attractive_centers = [
 ]
 csv_file_path='/Users/huntervoid/programming/Ranking cities in NorCal/cal_cities.csv'
 cal_cities = []
-state=", USA"
+state=", CA, USA"
 with open(csv_file_path, 'r') as file:
     csvreader=csv.reader(file)
     for row in csvreader:
+        # pp.pprint(row)
         cal_cities.append(row[1]+state) 
 # pp.pprint(cal_cities)
 foo = DistanceMatrixTest()
@@ -175,7 +180,8 @@ for c in range(num_chunks):
     else:
         evaluate = cal_cities[c*chunk_size:c*chunk_size+leftovers]
     results = foo.test_basic_params(evaluate, SF)
+    # pp.pprint(results)
     SF_neighbors = foo.filter_results(results)
     f.write('\n')
     f.write('\n'.join(SF_neighbors))
-    pp.pprint(SF_neighbors)
+    # pp.pprint(SF_neighbors)
