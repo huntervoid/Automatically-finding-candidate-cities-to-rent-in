@@ -113,14 +113,14 @@ class DistanceMatrixTest():
         return r
 
     def filter_results(self, r):
-        max_dist_from_SF = 160 # km
-        SF_neighbors = []
+        max_dist_from_center = 65 # km
+        city_neighbors = []
         pp = pprint.PrettyPrinter(indent=4)
         r_dict = json.loads(r.text)
         # pp.pprint(r_dict)
         destinations = r_dict["destination_addresses"]
         origins = r_dict["origin_addresses"]
-        pp.pprint(origins)
+        # pp.pprint(origins)
         # pp.pprint(len(origins))
         # pp.pprint(destinations)
         rows = r_dict["rows"]
@@ -133,24 +133,45 @@ class DistanceMatrixTest():
                     continue
                 # distance_from_SF = e["distance"]['text']
                 # distance_from_SF = float(s[0])
-                distance_from_SF = locale.atof(s[0])
+                distance_from_center = locale.atof(s[0])
                 # pp.pprint(distance_from_SF)
-                if distance_from_SF <= max_dist_from_SF:
-                    SF_neighbors.append(r_dict["origin_addresses"][i])
+                if distance_from_center <= max_dist_from_center:
+                    city_neighbors.append(r_dict["origin_addresses"][i])
         # pp.pprint(SF_neighbors)
-        return SF_neighbors
+        return city_neighbors
+
+    def find_neighbors(self, center_city, destinations):
+        cities_near_center = []
+        center_name = '_'.join(center_city.split())
+        center_name = center_name.replace(',', '')
+        print(center_name)
+        f = open("./cities_near_" + center_name + ".csv", "w")
+        # cal_cities = cal_cities[0:39]
+        num_candidate_cities = len(cal_cities)
+        chunk_size = 15
+        num_chunks = math.ceil(num_candidate_cities/chunk_size)
+        leftovers = num_candidate_cities % chunk_size
+        print(leftovers)
+        evaluate = []
+        for c in range(num_chunks):
+            if c*chunk_size <= num_candidate_cities-chunk_size-1:
+                evaluate = cal_cities[c*chunk_size:(c+1)*chunk_size]
+            else:
+                evaluate = cal_cities[c*chunk_size:c*chunk_size+leftovers]
+            results = foo.test_basic_params(evaluate, SF)
+            # pp.pprint(results)
+            city_neighbors = foo.filter_results(results)
+            f.write('\n')
+            f.write('\n'.join(city_neighbors))
+
 
 pp = pprint.PrettyPrinter(indent=4)
 SF = ["San Francisco, USA"]
 attractive_centers = [
     "San Francisco, USA",
     "Berkeley, USA",
-    "Sacramento, USA"
-    "Napa, USA",
-    "Sonoma, USA",
     "San Mateo, USA",
-    "Palo Alto, USA",
-    "San Jose, USA"
+    "Oakland, USA"
 ]
 csv_file_path='/Users/huntervoid/programming/Ranking cities in NorCal/cal_cities.csv'
 cal_cities = []
@@ -163,25 +184,4 @@ with open(csv_file_path, 'r') as file:
 # pp.pprint(cal_cities)
 foo = DistanceMatrixTest()
 foo.setUp()
-# results = foo.test_basic_params(cal_cities[25:50], SF)
-
-cities_near_SF = []
-f = open("./cities_near_SF.csv", "w")
-# cal_cities = cal_cities[0:39]
-num_candidate_cities = len(cal_cities)
-chunk_size = 15
-num_chunks = math.ceil(num_candidate_cities/chunk_size)
-leftovers = num_candidate_cities % chunk_size
-print(leftovers)
-evaluate = []
-for c in range(num_chunks):
-    if c*chunk_size <= num_candidate_cities-chunk_size-1:
-        evaluate = cal_cities[c*chunk_size:(c+1)*chunk_size]
-    else:
-        evaluate = cal_cities[c*chunk_size:c*chunk_size+leftovers]
-    results = foo.test_basic_params(evaluate, SF)
-    # pp.pprint(results)
-    SF_neighbors = foo.filter_results(results)
-    f.write('\n')
-    f.write('\n'.join(SF_neighbors))
-    # pp.pprint(SF_neighbors)
+foo.find_neighbors(SF[0], cal_cities)
