@@ -22,13 +22,6 @@ class DistanceMatrixTest():
 
 
     def setUp(self):
-        # csv_file_path='/Users/huntervoid/programming/Ranking cities in NorCal/cal_cities.csv'
-        # cal_cities = []
-        # state=", USA"
-        # with open(csv_file_path, 'r') as file:
-        #     csvreader=csv.reader(file)
-        #     for row in csvreader:
-    	#         cal_cities.append(row[1]+state)	
         self.key = "AIzaSyAjE6UiHJdgkgDLJ5zDM2upMuX81b15WZI"
         self.client = googlemaps.Client(self.key)
         # self.cal_cities = cal_cities
@@ -113,7 +106,7 @@ class DistanceMatrixTest():
         return r
 
     def filter_results(self, r):
-        max_dist_from_center = 30 # km
+        max_dist_from_center = 32 # km
         city_neighbors = []
         pp = pprint.PrettyPrinter(indent=4)
         r_dict = json.loads(r.text)
@@ -148,7 +141,6 @@ class DistanceMatrixTest():
         print(center_name)
         filename = "./cities_near_" + center_name + ".csv"
         f = open(filename, "w")
-        # cal_cities = cal_cities[0:39]
         num_candidate_cities = len(destinations)
         chunk_size = 15
         num_chunks = math.ceil(num_candidate_cities/chunk_size)
@@ -165,9 +157,7 @@ class DistanceMatrixTest():
             city_neighbors = foo.filter_results(results)
             if len(city_neighbors) > 0:
                 # pp.pprint(city_neighbors)
-                # f.write('\n'.join(city_neighbors))
                 write_string = '\n'.join(city_neighbors)
-                # f.write(write_string)
                 print(write_string, file=f)
         f.close()
 
@@ -193,4 +183,4 @@ with open(csv_file_path, 'r') as file:
 foo = DistanceMatrixTest()
 foo.setUp()
 for center in attractive_centers:
-    foo.find_neighbors(center, cal_cities[0:200])
+    foo.find_neighbors(center, cal_cities)
