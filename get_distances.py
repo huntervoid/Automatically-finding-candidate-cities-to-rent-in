@@ -3,6 +3,7 @@ import time
 
 import csv
 import pprint
+import re
 
 import math
 import os
@@ -28,17 +29,6 @@ class DistanceMatrixTest():
         # self.cal_cities = cal_cities
         # print(cal_cities)
         self.SF = ["San Francisco, USA"]
-        self.attractive_centers = [
-			"San Francisco, USA",
-			"Berkeley, USA",
-			"Sacramento, USA"
-			"Napa, USA",
-			"Sonoma, USA",
-			"San Mateo, USA",
-			"Palo Alto, USA",
-            "San Jose, USA"
-		]
-        # self.attractive_centers = attractive_centers
         locale.setlocale(locale.LC_ALL, '')
         # print(self.locale)
 
@@ -83,19 +73,12 @@ class DistanceMatrixTest():
     def test_basic_params(self, origins, destinations):
 
         pp = pprint.PrettyPrinter(indent=4)
-
-        # origins = self.cal_cities[0:2]
-        # pp.pprint(self.attractive_centers)
-        # destinations = self.attractive_centers
         # pp.pprint(destinations)
         params = self.built_parameters(origins, destinations)
         # pp.pprint(params)
 
         url = self.generate_auth_url("https://maps.googleapis.com/maps/api/distancematrix/json", params)
         # pp.pprint(url)
-
-        # matrix = self.client.distance_matrix(self.cal_cities[1:20], self.attractive_centers)
-
 
         payload={}
         headers={}
@@ -133,6 +116,64 @@ class DistanceMatrixTest():
                     city_neighbors.append(r_dict["origin_addresses"][i])
         # pp.pprint(city_neighbors)
         return city_neighbors
+
+    def compute_distance_matrix(self, origins, destinations):
+        results = foo.test_basic_params(origins, destinations)
+        pp = pprint.PrettyPrinter(indent=4)
+        r_dict = json.loads(results.text)
+        destinations = r_dict["destination_addresses"]
+        origins = r_dict["origin_addresses"]
+        rows = r_dict["rows"]
+        distances = [["City"]]
+        for d in destinations:
+            d_city = re.sub("CA|USA|,", "", d)
+            d_city = re.sub(" ","_", d_city)
+            d_city = re.sub("__","", d_city)
+            distances[0].append(d_city)
+        # distance = []
+        # distance = ["City"]
+        # distance.extend(destinations)
+        for i in range(len(origins)):
+            elements = rows[i]['elements']
+            distance = []
+            # o = origins[i].split()
+            # distance.append(origins[i])
+            # distance.append(o)
+            o_city = re.sub("CA|USA|,", "", origins[i])
+            # print(o_city)
+            o_city = re.sub(" ","_", o_city)
+            o_city = re.sub("__","", o_city)
+            # print(o_city)
+            distance = [o_city]
+            for e in elements:
+                try:
+                    # pp.pprint(e)
+                    d = (e["distance"]['text']).split()
+                    # pp.pprint(d)
+                    distance.append(str(locale.atof(d[0])))
+
+                except Exception as exception:
+                    # pp.pprint(d)
+                    print(exception)
+                    continue
+                    # distance.extend by -1
+            distances.append(distance)
+        filename = "./distance_matrix.csv"
+        # f = open(filename, "w")
+        with open(filename, 'w') as f:
+            for distance in distances:
+                pp.pprint(' '.join(distance))
+                d_str = ' '.join(distance)
+                # pp.pprint(d_str)
+                f.write(f"{d_str}\n")
+                # pp.pprint(distances, stream=f)
+                # file_pp = pprint.PrettyPrinter(stream = f)
+                # file_pp.pprint(d_str)
+                # f.write(pp.pprint.pformat(distances))
+
+        return distances
+                # distance_from_SF = e["distance"]['text']
+                # distance_from_SF = float(s[0])
 
     def find_neighbors(self, center_city, destinations):
         pp = pprint.PrettyPrinter(indent=4)
@@ -195,20 +236,25 @@ foo = DistanceMatrixTest()
 foo.setUp()
 all_city_neighbors = []
 all_attractive_centers_neighbors = []
-for center in attractive_centers:
-    all_city_neighbors = foo.find_neighbors(center, cal_cities[0:100])
-    pp.pprint(all_city_neighbors)
-    all_attractive_centers_neighbors.append(all_city_neighbors)
 
-intersection = []
-for i in range(len(all_attractive_centers_neighbors)):
-    if i > 0:
-        intersection = list(set(intersection) & set(all_attractive_centers_neighbors[i]))
-    else:
-        intersection = all_attractive_centers_neighbors[i]
-    pp.pprint(intersection)
+dist_mat = foo.compute_distance_matrix(cal_cities[0:10], attractive_centers)
+# pp.pprint(dist_mat)
 
-pp.pprint(intersection)
-filename = "./intersection.csv"
-f = open(filename, "w")
-f.write('\n'.join(intersection))
+
+# for center in attractive_centers:
+#     all_city_neighbors = foo.find_neighbors(center, cal_cities[0:100])
+#     pp.pprint(all_city_neighbors)
+#     all_attractive_centers_neighbors.append(all_city_neighbors)
+
+# intersection = []
+# for i in range(len(all_attractive_centers_neighbors)):
+#     if i > 0:
+#         intersection = list(set(intersection) & set(all_attractive_centers_neighbors[i]))
+#     else:
+#         intersection = all_attractive_centers_neighbors[i]
+#     pp.pprint(intersection)
+
+# pp.pprint(intersection)
+# filename = "./intersection.csv"
+# f = open(filename, "w")
+# f.write('\n'.join(intersection))
