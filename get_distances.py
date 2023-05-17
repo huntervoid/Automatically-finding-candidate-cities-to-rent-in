@@ -5,6 +5,7 @@ import csv
 import pprint
 
 import math
+import os
 
 import locale
 
@@ -130,7 +131,7 @@ class DistanceMatrixTest():
                 # pp.pprint(distance_from_SF)
                 if distance_from_center <= max_dist_from_center:
                     city_neighbors.append(r_dict["origin_addresses"][i])
-        # pp.pprint(SF_neighbors)
+        # pp.pprint(city_neighbors)
         return city_neighbors
 
     def find_neighbors(self, center_city, destinations):
@@ -140,6 +141,9 @@ class DistanceMatrixTest():
         center_name = center_name.replace(',', '')
         print(center_name)
         filename = "./cities_near_" + center_name + ".csv"
+        # Check if file exists
+
+
         f = open(filename, "w")
         num_candidate_cities = len(destinations)
         chunk_size = 15
@@ -147,6 +151,7 @@ class DistanceMatrixTest():
         leftovers = num_candidate_cities % chunk_size
         print(leftovers)
         evaluate = []
+        all_city_neighbors = []
         for c in range(num_chunks):
             if c*chunk_size <= num_candidate_cities-chunk_size-1:
                 evaluate = destinations[c*chunk_size:(c+1)*chunk_size]
@@ -159,14 +164,20 @@ class DistanceMatrixTest():
                 # pp.pprint(city_neighbors)
                 write_string = '\n'.join(city_neighbors)
                 print(write_string, file=f)
+                all_city_neighbors.extend(city_neighbors)
         f.close()
+        return all_city_neighbors
 
 
 pp = pprint.PrettyPrinter(indent=4)
 SF = ["San Francisco, USA"]
 attractive_centers = [
-    "San Francisco, USA",
-    "Berkeley, USA",
+    # "San Francisco, USA",
+    "Half Moon Bay, USA",
+    # "San Jose, USA",
+    # "Fremont, USA",
+    "Palo Alto",
+    # "Berkeley, USA",
     # "Sacramento, USA",
     "San Mateo, USA",
     # "Oakland, USA"
@@ -182,5 +193,22 @@ with open(csv_file_path, 'r') as file:
 # pp.pprint(cal_cities)
 foo = DistanceMatrixTest()
 foo.setUp()
+all_city_neighbors = []
+all_attractive_centers_neighbors = []
 for center in attractive_centers:
-    foo.find_neighbors(center, cal_cities)
+    all_city_neighbors = foo.find_neighbors(center, cal_cities[0:100])
+    pp.pprint(all_city_neighbors)
+    all_attractive_centers_neighbors.append(all_city_neighbors)
+
+intersection = []
+for i in range(len(all_attractive_centers_neighbors)):
+    if i > 0:
+        intersection = list(set(intersection) & set(all_attractive_centers_neighbors[i]))
+    else:
+        intersection = all_attractive_centers_neighbors[i]
+    pp.pprint(intersection)
+
+pp.pprint(intersection)
+filename = "./intersection.csv"
+f = open(filename, "w")
+f.write('\n'.join(intersection))
