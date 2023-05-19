@@ -91,75 +91,34 @@ class DistanceMatrixTest():
         # print(r.text)
         return r
 
-    # def filter_results(self, r):
-    #     max_dist_from_center = 32 # km
-    #     city_neighbors = []
-    #     pp = pprint.PrettyPrinter(indent=4)
-    #     r_dict = json.loads(r.text)
-    #     # pp.pprint(r_dict)
-    #     destinations = r_dict["destination_addresses"]
-    #     origins = r_dict["origin_addresses"]
-    #     # pp.pprint(origins)
-    #     # pp.pprint(len(origins))
-    #     # pp.pprint(destinations)
-    #     rows = r_dict["rows"]
-    #     for i in range(len(origins)):
-    #         elements = rows[i]['elements']
-    #         for e in elements:
-    #             try:
-    #                 s = (e["distance"]['text']).split()
-    #             except:
-    #                 continue
-    #             # distance_from_SF = e["distance"]['text']
-    #             # distance_from_SF = float(s[0])
-    #             distance_from_center = locale.atof(s[0])
-    #             # pp.pprint(distance_from_SF)
-    #             if distance_from_center <= max_dist_from_center:
-    #                 city_neighbors.append(r_dict["origin_addresses"][i])
-    #     # pp.pprint(city_neighbors)
-    #     return city_neighbors
-
-    # def filter_results(self, distances):
-    #     max_dist_from_center = 150.0 # km
-    #     min_hits_num = 3
-    #     city_neighbors = []
-    #     pp = pprint.PrettyPrinter(indent=4)
-    #     distances_bak = copy.deepcopy(distances)
-    #     # pp.pprint(distances_bak)
-    #     distances = distances[1:]
-    #     # pp.pprint(distances_bak)
-    #     for origin in range(len(distances)):
-    #         # if origin == 0:
-    #         #     continue
-    #         num_hits = 0
-    #         for destination in range(len(distances[0])-1):
-    #             destination += 1
-    #             if float(distances[origin][destination]) <= float(max_dist_from_center):
-    #                 # pp.pprint(float(distances[origin][destination]))
-    #                 num_hits += 1
-    #         if num_hits < min_hits_num:
-    #             distances_bak[origin] = []
-    #     return distances_bak
-
-
     def filter_results(self, distances):
-        max_dist_from_center = 150.0 # km
+        max_dist_from_center = 30 # km
         min_hits_num = 3
         city_neighbors = []
         pp = pprint.PrettyPrinter(indent=4)
         distances_filtered = []
         distances = distances[1:]
+        # pp.pprint(distances)
+        # pp.pprint(len(distances))
         for origin in range(len(distances)):
             # if origin == 0:
             #     continue
             num_hits = 0
+            # pp.pprint(distances[0])
+            # pp.pprint(len(distances[0]))
             for destination in range(len(distances[0])-1):
                 destination += 1
+                # pp.pprint(float(distances[origin][destination]))
                 if float(distances[origin][destination]) <= float(max_dist_from_center):
-                    # pp.pprint(float(distances[origin][destination]))
                     num_hits += 1
             if num_hits >= min_hits_num:
                 distances_filtered.append(distances[origin])
+            filename = "./neighbor_cities.csv"
+            file = open(filename, 'w')
+            writer = csv.writer(file)
+            for l in distances_filtered:
+                writer.writerow(l)
+            file.close()
         return distances_filtered    
 
 
@@ -178,11 +137,23 @@ class DistanceMatrixTest():
                 chunked_origins.append(origins[c*chunk_size:c*chunk_size+leftovers])
         return chunked_origins
 
+
+    def load_distance_matrix(self, filename):
+        distance_matrix = []
+        with open(filename, 'r') as read_obj:
+            csv_reader = csv.reader(read_obj)
+            distance_matrix = list(csv_reader)
+        return distance_matrix
+
     def compute_distance_matrix(self, all_origins, destinations):
         pp = pprint.PrettyPrinter(indent=4)
+        filename = "./distance_matrix.csv"
+        if os.path.isfile(filename) == True:
+            return self.load_distance_matrix(filename)
+
         chunked_origins = self.chunk_origins(all_origins)
         # pp.pprint(chunked_origins)
-        filename = "./distance_matrix.csv"
+        
         distances = [[]]
         for origins in chunked_origins:
             # pp.pprint(origins)
@@ -231,22 +202,24 @@ class DistanceMatrixTest():
                 # pp.pprint(distances)
             # filename = "./distance_matrix.csv"
             # f = open(filename, "w")
-            if os.path.isfile(filename) == False:
-                with open(filename, 'w') as f:
-                    for distance in distances:
-                        # pp.pprint(' '.join(distance))
-                        d_str = ' '.join(distance)
-                        # pp.pprint(d_str)
-                        f.write(f"{d_str}\n")
-                    f.close()
-            else:
-                with open(filename, 'a') as f:
-                    for distance in distances:
-                        # pp.pprint(' '.join(distance))
-                        d_str = ' '.join(distance)
-                        # pp.pprint(d_str)
-                        f.write(f"{d_str}\n")
-                    f.close()
+        if os.path.isfile(filename) == False:
+            with open(filename, 'w') as f:
+                for distance in distances:
+                    # pp.pprint(' '.join(distance))
+                    d_str = ','.join(distance)
+                    # pp.pprint(d_str)
+                    f.write(f"{d_str}\n")
+                f.close()
+        else:
+            with open(filename, 'a') as f:
+                for i in range(len(distances)):
+                    if i == 0:
+                        continue
+                    # pp.pprint(' '.join(distance))
+                    d_str = ','.join(distances[i])
+                    # pp.pprint(d_str)
+                    f.write(f"{d_str}\n")
+                f.close()
 
         return distances
 
@@ -275,6 +248,7 @@ attractive_centers = [
     "Palo Alto",
     "Berkeley, USA",
     # "Sacramento, USA",
+    # "Napa, USA",
     "San Mateo, USA",
     "Oakland, USA"
 ]
@@ -292,10 +266,10 @@ foo.setUp()
 all_city_neighbors = []
 all_attractive_centers_neighbors = []
 
-dist_mat = foo.compute_distance_matrix(cal_cities[0:15], attractive_centers)
+dist_mat = foo.compute_distance_matrix(cal_cities[0:500], attractive_centers)
 # pp.pprint(dist_mat)
 filtered_cities = foo.filter_results(dist_mat)
-pp.pprint(filtered_cities)
+# pp.pprint(filtered_cities)
 
 
 # for center in attractive_centers:
