@@ -92,7 +92,7 @@ class DistanceMatrixTest():
         return r
 
     def filter_results(self, distances):
-        max_dist_from_center = 30 # km
+        max_dist_from_center = 35 # km
         min_hits_num = 3
         city_neighbors = []
         pp = pprint.PrettyPrinter(indent=4)
@@ -104,15 +104,21 @@ class DistanceMatrixTest():
             # if origin == 0:
             #     continue
             num_hits = 0
+            avg = 0
             # pp.pprint(distances[0])
             # pp.pprint(len(distances[0]))
             for destination in range(len(distances[0])-1):
                 destination += 1
                 # pp.pprint(float(distances[origin][destination]))
-                if float(distances[origin][destination]) <= float(max_dist_from_center):
-                    num_hits += 1
+                try:
+                    if float(distances[origin][destination]) <= float(max_dist_from_center):
+                        num_hits += 1
+                        avg += float(distances[origin][destination])
+                except Exception as e:
+                    pp.pprint(e)
+                    continue
             if num_hits >= min_hits_num:
-                distances_filtered.append(distances[origin])
+                distances_filtered.append(distances[origin] + [avg/float(num_hits)])
             filename = "./neighbor_cities.csv"
             file = open(filename, 'w')
             writer = csv.writer(file)
@@ -155,6 +161,13 @@ class DistanceMatrixTest():
         # pp.pprint(chunked_origins)
         
         distances = [[]]
+        if os.path.isfile(filename) == False:
+            distances[0] = ["City"]
+            for d in destinations:
+                d_city = re.sub("CA|USA|,", "", d)
+                d_city = re.sub(" ","_", d_city)
+                d_city = re.sub("__","", d_city)
+                distances[0].append(d_city)
         for origins in chunked_origins:
             # pp.pprint(origins)
             # pp.pprint(destinations)
@@ -166,16 +179,18 @@ class DistanceMatrixTest():
             origins = r_dict["origin_addresses"]
             rows = r_dict["rows"]
             # distances = [[]]
-            if os.path.isfile(filename) == False:
-                distances[0] = ["City"]
-                for d in destinations:
-                    d_city = re.sub("CA|USA|,", "", d)
-                    d_city = re.sub(" ","_", d_city)
-                    d_city = re.sub("__","", d_city)
-                    distances[0].append(d_city)
+            # if os.path.isfile(filename) == False:
+            #     distances[0] = ["City"]
+            #     for d in destinations:
+            #         d_city = re.sub("CA|USA|,", "", d)
+            #         d_city = re.sub(" ","_", d_city)
+            #         d_city = re.sub("__","", d_city)
+            #         distances[0].append(d_city)
+                # pp.pprint(distances)
             # distance = []
             # distance = ["City"]
             # distance.extend(destinations)
+            # pp.pprint(distances)
             for i in range(len(origins)):
                 elements = rows[i]['elements']
                 distance = []
@@ -193,7 +208,10 @@ class DistanceMatrixTest():
                         distance.append(str(locale.atof(d[0])))
 
                     except Exception as exception:
+                        # if i == 0:
+                        #     distances.append(distances[0])
                         # pp.pprint(d)
+                        pp.pprint(e)
                         print(exception)
                         continue
                         # distance.extend by -1
@@ -266,7 +284,7 @@ foo.setUp()
 all_city_neighbors = []
 all_attractive_centers_neighbors = []
 
-dist_mat = foo.compute_distance_matrix(cal_cities[0:500], attractive_centers)
+dist_mat = foo.compute_distance_matrix(cal_cities[1001:], attractive_centers)
 # pp.pprint(dist_mat)
 filtered_cities = foo.filter_results(dist_mat)
 # pp.pprint(filtered_cities)
