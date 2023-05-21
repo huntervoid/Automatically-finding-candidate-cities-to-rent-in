@@ -1,14 +1,9 @@
-from datetime import datetime
-import time
-
 import csv
 import pprint
 import re
 
 import math
 import os
-
-import copy
 
 import locale
 
@@ -26,7 +21,7 @@ class DistanceMatrixTest():
 
 
     def setUp(self):
-        self.key = "AIzaSyAjE6UiHJdgkgDLJ5zDM2upMuX81b15WZI"
+        self.key = "AIzaSyAGLahYOWSHacvE48Npr_ng9yDAaAU8mgk"
         self.client = googlemaps.Client(self.key)
         # self.cal_cities = cal_cities
         # print(cal_cities)
@@ -178,19 +173,6 @@ class DistanceMatrixTest():
             destinations = r_dict["destination_addresses"]
             origins = r_dict["origin_addresses"]
             rows = r_dict["rows"]
-            # distances = [[]]
-            # if os.path.isfile(filename) == False:
-            #     distances[0] = ["City"]
-            #     for d in destinations:
-            #         d_city = re.sub("CA|USA|,", "", d)
-            #         d_city = re.sub(" ","_", d_city)
-            #         d_city = re.sub("__","", d_city)
-            #         distances[0].append(d_city)
-                # pp.pprint(distances)
-            # distance = []
-            # distance = ["City"]
-            # distance.extend(destinations)
-            # pp.pprint(distances)
             for i in range(len(origins)):
                 elements = rows[i]['elements']
                 distance = []
@@ -288,22 +270,3 @@ dist_mat = foo.compute_distance_matrix(cal_cities[1001:], attractive_centers)
 # pp.pprint(dist_mat)
 filtered_cities = foo.filter_results(dist_mat)
 # pp.pprint(filtered_cities)
-
-
-# for center in attractive_centers:
-#     all_city_neighbors = foo.find_neighbors(center, cal_cities[0:100])
-#     pp.pprint(all_city_neighbors)
-#     all_attractive_centers_neighbors.append(all_city_neighbors)
-
-# intersection = []
-# for i in range(len(all_attractive_centers_neighbors)):
-#     if i > 0:
-#         intersection = list(set(intersection) & set(all_attractive_centers_neighbors[i]))
-#     else:
-#         intersection = all_attractive_centers_neighbors[i]
-#     pp.pprint(intersection)
-
-# pp.pprint(intersection)
-# filename = "./intersection.csv"
-# f = open(filename, "w")
-# f.write('\n'.join(intersection))
