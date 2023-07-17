@@ -1,0 +1,13 @@
+# ignore csv and numbers files
+*.csv
+*.numbers
+
+# OS generated files #
+######################
+.DS_Store
+
+# ignore depdendencies 
+rank_cities_v2/
+
+# ignore some folders
+experimenting/
